@@ -1,9 +1,9 @@
-import { Schema, Types, model } from "mongoose";
-import { ENUM_PERMISSION_NAMES, ENUM_ROLE, RoleEnumValues } from "../../utils/enums/rolePermissionEnum";
-import { IOrganizerRole, IOrganizerRoleDocument, IOrganizerRoleModel } from "../interfaces/IOrganizerRole";
+import { Schema, model } from "mongoose";
+import { ENUM_PERMISSION_NAMES, RoleEnumValues } from "../../utils/enums/rolePermissionEnum";
 import { covertTimestamp } from "../../utils/helpers/transforms";
+import { IRole, IRoleDocument, IRoleModel } from "../interfaces/IRole";
 
-const RoleSchema = new Schema<IOrganizerRoleDocument>({
+const RoleSchema = new Schema<IRoleDocument>({
     name: {
         type: String,
         lowercase: true,
@@ -12,11 +12,6 @@ const RoleSchema = new Schema<IOrganizerRoleDocument>({
             values: RoleEnumValues,
             message: `Role name value can not be {VALUE}, must be ${RoleEnumValues}`
         },
-    },
-    business: {
-        type: Types.ObjectId,
-        ref: "Business",
-        required: [true, 'Bussiness Id is required'],
     },
     permissions: {
         type: [String],
@@ -44,17 +39,11 @@ RoleSchema.pre('findOneAndUpdate', function (next) {
     next();
 });
 
-// checking is super-owner found under a business
-RoleSchema.statics.findSuperOwnerUnderABusiness = async function (businessId: string): Promise<IOrganizerRole | null> {
-    const findSuperOwnerUnderABusiness = await this.findOne({ name: ENUM_ROLE.SUPER_OWNER, business: businessId }).lean();
-    return findSuperOwnerUnderABusiness;
-}
-
 // checking is organizer found with the id
-RoleSchema.statics.isRoleUnderABusinessExists = async function (roleId: string, businessId: string): Promise<IOrganizerRole | null> {
-    const role = await this.findOne({ _id: roleId, business: businessId }).lean();
+RoleSchema.statics.isRoleExists = async function (roleId: string): Promise<IRole | null> {
+    const role = await this.findOne({ _id: roleId }).lean();
     return role;
 }
 
-const Role = model<IOrganizerRoleDocument, IOrganizerRoleModel>("Role", RoleSchema);
+const Role = model<IRoleDocument, IRoleModel>("Role", RoleSchema);
 export default Role;

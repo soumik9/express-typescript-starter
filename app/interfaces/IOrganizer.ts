@@ -1,7 +1,6 @@
 import { Model, Types } from "mongoose";
 import { ICommonSchema } from "./Common";
-import { IOrganizerRole } from "./IOrganizerRole";
-import { IBusiness } from "./IBusiness";
+import { IRole } from "./IRole";
 
 // organizer interface
 export interface IOrganizer extends ICommonSchema {
@@ -12,12 +11,7 @@ export interface IOrganizer extends ICommonSchema {
     password: string;
     confirmPassword: string | undefined;
     isEmailVerified: boolean;
-    role: string | Types.ObjectId | Partial<IOrganizerRole>;
-    business: string | Types.ObjectId | Partial<IBusiness>
-    twoFactor: {
-        isTextActive: boolean;
-        isEmailActive: boolean;
-    }
+    role: string | Types.ObjectId | Partial<IRole>;
 }
 
 // organizer schema methods

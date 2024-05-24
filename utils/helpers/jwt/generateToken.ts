@@ -6,7 +6,6 @@ export default (data: Partial<IOrganizer>): String => {
 
   const payload = {
     _id: data._id,
-    business: data.business,
   };
 
   // token generating

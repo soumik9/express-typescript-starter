@@ -8,10 +8,6 @@ const OrganizerSchema = new Schema<IOrganizerDocument>({
         type: String,
         required: [true, 'Name is required'],
     },
-    surname: {
-        type: String,
-        required: [true, 'Manager surname is required'],
-    },
     email: {
         type: String,
         required: [true, 'Email is required'],
@@ -31,27 +27,8 @@ const OrganizerSchema = new Schema<IOrganizerDocument>({
     },
     role: {
         type: Types.ObjectId,
-        ref: "OrganizerRole",
-        required: [true, 'Organizer role id field is required']
-    },
-    business: {
-        type: Types.ObjectId,
-        ref: "Business",
-        required: [true, 'Business id field is required']
-    },
-    isEmailVerified: {
-        type: Boolean, // check email is verified or not
-        default: false,
-    },
-    twoFactor: {
-        isTextActive: {
-            type: Boolean, // two-factor auth text messageing 
-            default: false,
-        },
-        isEmailActive: {
-            type: Boolean, // two-factor auth email messageing
-            default: false,
-        },
+        ref: "Role",
+        required: [true, 'role id field is required']
     },
     createdAt: {
         type: Number,

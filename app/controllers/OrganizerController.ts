@@ -1,5 +1,5 @@
 import { Request, RequestHandler, Response } from "express";
-import { Organizer, Business, OrganizerRole } from "../models";
+import { Organizer } from "../models";
 import ApiError from "../../utils/errors/ApiError";
 import httpStatus from "http-status";
 import { ENUM_ROLE } from "../../utils/enums/rolePermissionEnum";
@@ -7,7 +7,7 @@ import { catchAsync, sendResponse } from "../../utils/helpers/global";
 import { mailTeamplates, sendMail } from "../../utils/helpers/email";
 import { pick } from "../../utils/helpers/transforms";
 import { config } from "../../utils/server";
-import { IOrganizerRole } from "../interfaces/IOrganizerRole";
+import { IRole } from "../interfaces/IRole";
 
 // filering and searhing constant
 export const organizerFilterableFields = ['isEmailVerified'];
@@ -15,9 +15,6 @@ export const organizerFilterableFields = ['isEmailVerified'];
 // create new organizer to a business controller
 const CreateNewOrganizerToSentInviteToAddUnderBusiness: RequestHandler = catchAsync(
     async (req: Request, res: Response) => {
-
-        // geting business id from token
-        const businessId = req.user?.business;
 
         // parsing data
         const organizerData = req.body && req.body.data ? JSON.parse(req.body.data) : {};
@@ -27,18 +24,10 @@ const CreateNewOrganizerToSentInviteToAddUnderBusiness: RequestHandler = catchAs
         if (findOrgnizer)
             throw new ApiError(httpStatus.NOT_FOUND, 'Already an employee of a business profile!');
 
-        // check the role is under requester business
-        const findOrganizerRoleUnderBusiness = await OrganizerRole.isRoleUnderABusinessExists(organizerData.role, businessId);
-        if (!findOrganizerRoleUnderBusiness)
-            throw new ApiError(httpStatus.NOT_FOUND, 'Invalid role under your business!');
-
         // saving role info
-        const data = await Organizer.create({ ...organizerData, business: businessId });
+        const data = await Organizer.create({ ...organizerData });
 
         if (data._id) {
-            // push new organizer id to business orgaizers
-            await Business.pushOrganizerIdToBusinessOrganizers(businessId, String(data._id));
-
             // email template with invitation link
             const mailTemp = await mailTeamplates.sassInvitationEmailTemp(String(data._id), req);
 
@@ -63,11 +52,8 @@ const CreateNewOrganizerToSentInviteToAddUnderBusiness: RequestHandler = catchAs
 const GetOrganizersUnderBusiness: RequestHandler = catchAsync(
     async (req: Request, res: Response) => {
 
-        const businessId = req?.user?.business;
-
         // filter data pick
         const andConditions = [];
-        andConditions.push({ business: businessId }); // Add the business condition
         const filtersData = pick(req.query, organizerFilterableFields);
 
         // if any filterable query make it on object
@@ -82,7 +68,7 @@ const GetOrganizersUnderBusiness: RequestHandler = catchAsync(
         // finalizing condition & find data
         const whereConditions = andConditions.length > 0 ? { $and: andConditions } : {};
         const data = await Organizer.find(whereConditions);
-        const total = await Organizer.find({ business: businessId }).countDocuments();
+        const total = await Organizer.find().countDocuments();
 
         sendResponse(res, {
             statusCode: httpStatus.OK,
@@ -101,13 +87,8 @@ const GetOrganizersUnderBusiness: RequestHandler = catchAsync(
 const GetOrganizerById: RequestHandler = catchAsync(
     async (req: Request, res: Response) => {
 
-        const businessId = req.user?.business;
         const organizerId = req.params.organizerId;
-        const data = await Organizer.findOne({ _id: organizerId, business: businessId }).select("-twoFactor -password");
-
-        // check requester business id is organizer business profile
-        if (String(data?.business) !== String(businessId))
-            throw new ApiError(httpStatus.BAD_REQUEST, 'You are not in authorized get organizer profile.');
+        const data = await Organizer.findOne({ _id: organizerId }).select("-password");
 
         sendResponse(res, {
             statusCode: httpStatus.OK,
@@ -123,22 +104,17 @@ const UpdateOrganizerUnderBusiness: RequestHandler = catchAsync(
     async (req: Request, res: Response) => {
 
         // parsing data and params
-        const businessId = req.user?.business;
         const organizerId = req.params.organizerId;
         const parsedData = req.body && req.body.data ? JSON.parse(req.body.data) : {};
         const { isEmailVerified, password, confirmPassword, ...body } = parsedData;
 
         // Check if a organizer exists or not
-        const existsOrganizer = await Organizer.isOrganizerExistsById(organizerId, "_id business");
+        const existsOrganizer = await Organizer.isOrganizerExistsById(organizerId, "_id");
         if (!existsOrganizer)
             throw new ApiError(httpStatus.BAD_REQUEST, 'Organizer not found.');
 
-        // check requester business id is organizer business profile
-        if (String(existsOrganizer.business) !== String(businessId))
-            throw new ApiError(httpStatus.BAD_REQUEST, 'You are not in authorized business profile.');
-
         // updating role info
-        const data = await Organizer.findOneAndUpdate({ _id: organizerId, business: businessId }, {
+        const data = await Organizer.findOneAndUpdate({ _id: organizerId }, {
             $set: body
         }, { new: true, runValidators: true })
 
@@ -155,28 +131,16 @@ const UpdateOrganizerUnderBusiness: RequestHandler = catchAsync(
 const DeleteOrganizer: RequestHandler = catchAsync(
     async (req: Request, res: Response) => {
 
-        const businessId = req.user?.business;
         const organizerId = req.params.organizerId;
 
         // Check if a organizer exists or not
-        const existsOrganizer = await Organizer.isOrganizerExistsById(organizerId, "_id business");
+        const existsOrganizer = await Organizer.isOrganizerExistsById(organizerId, "_id");
         if (!existsOrganizer)
             throw new ApiError(httpStatus.BAD_REQUEST, 'Organizer not found.');
 
-        // check requester business id is organizer business profile
-        if (String(existsOrganizer.business) !== String(businessId))
-            throw new ApiError(httpStatus.BAD_REQUEST, 'You are not in authorized business profile.');
-
-        // checking is requester can't delete super owner
-        if (existsOrganizer.role && typeof existsOrganizer.role === 'object') {
-            const role = existsOrganizer.role as Partial<IOrganizerRole>;
-            if (role.name === ENUM_ROLE.SUPER_OWNER)
-                throw new ApiError(httpStatus.BAD_REQUEST, 'You are not allowed to delete business super-owner.');
-        }
-
         // checking is requester super-owner to delete
         if (existsOrganizer.role && typeof existsOrganizer.role === 'object') {
-            const role = existsOrganizer.role as Partial<IOrganizerRole>;
+            const role = existsOrganizer.role as Partial<IRole>;
             if (role.name !== ENUM_ROLE.SUPER_OWNER)
                 throw new ApiError(httpStatus.BAD_REQUEST, 'You are not authorized to delete any organizer.');
         }

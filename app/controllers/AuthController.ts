@@ -58,7 +58,7 @@ const Profile: RequestHandler = catchAsync(
     async (req: Request, res: Response) => {
 
         // finding profile data
-        const data = await Organizer.findById(req.user?._id).select("-password").populate("business", "name");
+        const data = await Organizer.findById(req.user?._id).select("-password");
 
         sendResponse<IOrganizer>(res, {
             statusCode: httpStatus.OK,
