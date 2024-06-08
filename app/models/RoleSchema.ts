@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 import { ENUM_PERMISSION_NAMES, RoleEnumValues } from "../../utils/enums/rolePermissionEnum";
-import { covertTimestamp } from "../../utils/helpers/transforms";
 import { IRole, IRoleDocument, IRoleModel } from "../interfaces/IRole";
+import moment from "moment";
 
 const RoleSchema = new Schema<IRoleDocument>({
     name: {
@@ -25,18 +25,12 @@ const RoleSchema = new Schema<IRoleDocument>({
     },
     createdAt: {
         type: Number,
-        default: covertTimestamp.currentTimeToUnix()
+        default: () => moment().unix(),
     },
     updatedAt: {
         type: Number,
-        default: covertTimestamp.currentTimeToUnix()
+        default: () => moment().unix(),
     },
-});
-
-RoleSchema.pre('findOneAndUpdate', function (next) {
-    const update = this.getUpdate() as any;
-    update.$set.updatedAt = covertTimestamp.currentTimeToUnix();
-    next();
 });
 
 // checking is organizer found with the id

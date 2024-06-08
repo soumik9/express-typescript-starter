@@ -1,7 +1,7 @@
 import { Schema, Types, model } from "mongoose";
 import validator from "validator";
 import { IOrganizer, IOrganizerDocument, IOrganizerModel } from "../interfaces/IOrganizer";
-import { covertTimestamp } from "../../utils/helpers/transforms";
+import moment from "moment";
 
 const OrganizerSchema = new Schema<IOrganizerDocument>({
     name: {
@@ -32,19 +32,14 @@ const OrganizerSchema = new Schema<IOrganizerDocument>({
     },
     createdAt: {
         type: Number,
-        default: covertTimestamp.currentTimeToUnix()
+        default: () => moment().unix(),
     },
     updatedAt: {
         type: Number,
-        default: covertTimestamp.currentTimeToUnix()
+        default: () => moment().unix(),
     },
 });
 
-OrganizerSchema.pre('findOneAndUpdate', function (next) {
-    const update = this.getUpdate() as any;
-    update.$set.updatedAt = covertTimestamp.currentTimeToUnix();
-    next();
-});
 
 // checking is organizer found with the id
 OrganizerSchema.statics.isOrganizerExistsById = async function (organizerId: string, select: string): Promise<IOrganizer | null> {
