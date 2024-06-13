@@ -21,7 +21,7 @@ const customColors = {
 winston.addColors(customColors);
 
 const logger = winston.createLogger({
-  level: "info",
+  level: "http",
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.printf(({ level, message, timestamp }) => {
