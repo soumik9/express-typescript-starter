@@ -2,7 +2,6 @@ import { Request, RequestHandler, Response } from "express";
 import { Organizer } from "../models";
 import ApiError from "../../utils/errors/ApiError";
 import httpStatus from "http-status";
-import { ENUM_ROLE } from "../../utils/enums/rolePermissionEnum";
 import { catchAsync, sendResponse } from "../../utils/helpers/global";
 import { mailTeamplates, sendMail } from "../../utils/helpers/email";
 import { pick } from "../../utils/helpers/transforms";
@@ -138,12 +137,6 @@ const DeleteOrganizer: RequestHandler = catchAsync(
         if (!existsOrganizer)
             throw new ApiError(httpStatus.BAD_REQUEST, 'Organizer not found.');
 
-        // checking is requester super-owner to delete
-        if (existsOrganizer.role && typeof existsOrganizer.role === 'object') {
-            const role = existsOrganizer.role as Partial<IRole>;
-            if (role.name !== ENUM_ROLE.SUPER_OWNER)
-                throw new ApiError(httpStatus.BAD_REQUEST, 'You are not authorized to delete any organizer.');
-        }
 
         await Organizer.deleteOne({ _id: organizerId })
 

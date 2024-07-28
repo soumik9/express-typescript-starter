@@ -1,5 +1,4 @@
 import { Schema, model } from "mongoose";
-import { ENUM_PERMISSION_NAMES, RoleEnumValues } from "../../utils/enums/rolePermissionEnum";
 import { IRole, IRoleDocument, IRoleModel } from "../interfaces/IRole";
 import moment from "moment";
 
@@ -8,17 +7,17 @@ const RoleSchema = new Schema<IRoleDocument>({
         type: String,
         lowercase: true,
         required: [true, 'Organizer Role name is required'],
-        enum: {
-            values: RoleEnumValues,
-            message: `Role name value can not be {VALUE}, must be ${RoleEnumValues}`
-        },
+        // enum: {
+        //     values: RoleEnumValues,
+        //     message: `Role name value can not be {VALUE}, must be ${RoleEnumValues}`
+        // },
     },
     permissions: {
         type: [String],
         validate: {
             validator: function (permissions: string[]) {
                 // Check if all permissions are included in the ENUM_PERMISSION_NAMES enum
-                return permissions.every((permission: any) => Object.values(ENUM_PERMISSION_NAMES).includes(permission));
+                // return permissions.every((permission: any) => Object.values(ENUM_PERMISSION_NAMES).includes(permission));
             },
             message: ({ value }) => `${value} is not a valid permission.`
         }

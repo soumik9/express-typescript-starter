@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import logger from "../helpers/logger/logger";
+import { errorLogger, infoLogger } from "../helpers/logger/logger";
 
 // Function to move file to specific folder
 const singleFileTransfer = (filePath: string, destinationFolder: string) => {
@@ -17,9 +17,9 @@ const singleFileTransfer = (filePath: string, destinationFolder: string) => {
     // Move the file to the destination folder
     fs.rename(filePath, newFilePath, (err) => {
         if (err) {
-            logger.log("error", `Error moving file: ${err}`);
+            errorLogger.error(`Error moving file: ${err}`);
         } else {
-            logger.log("info", `File moved successfully to ${newFilePath}`);
+            infoLogger.info(`File moved successfully to ${newFilePath}`);
         }
     });
 

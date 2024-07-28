@@ -1,4 +1,5 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
+import { errorLogger } from '../logger/logger';
 
 const catchAsync =
     (fn: RequestHandler) =>
@@ -7,7 +8,7 @@ const catchAsync =
                 await fn(req, res, next);
             } catch (error) {
                 next(error);
-                console.log(error);
+                errorLogger.error(error);
             }
         };
 

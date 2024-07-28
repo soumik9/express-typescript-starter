@@ -1,8 +1,8 @@
 import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
 import transporter from "../../server/transporter";
-import logger from "../logger/logger";
 import { config } from "../../server";
+import { errorLogger, infoLogger } from "../logger/logger";
 
 interface ISendMail {
     email: string;
@@ -13,7 +13,7 @@ interface ISendMail {
 const sendMail = async ({ email, subject, content }: ISendMail) => {
     try {
         await transporter.verify();
-        logger.log("info", `Server is ready to take our messages`);
+        infoLogger.info(`Server is ready to take our messages`);
 
         const response = await transporter.sendMail({
             from: config.SENDER_EMAIL_ID,
@@ -24,7 +24,7 @@ const sendMail = async ({ email, subject, content }: ISendMail) => {
 
         return response;
     } catch (error) {
-        logger.log("error", `Error on mail server: ${error instanceof Error ? error.message : 'unknown'}`);
+        errorLogger.error(`Error on mail server: ${error instanceof Error ? error.message : 'unknown'}`);
         throw new ApiError(httpStatus.BAD_REQUEST, 'Failed to send email to user.');
     }
 };
